@@ -1,11 +1,11 @@
-import './App.css'
+import { Tamagotchi } from './components/Tamagotchi';
 
 function App() {
-  return (
-  <div className="bg-gray-100 min-h-screen flex justify-center 
-  items-center">
-  <h1 className="text-2xl font-bold">Hello, Tamagotchi!</h1>
+return (
+  <div className="bg-gray-100 min-h-screen flex justify-center items-center">
+    <Tamagotchi/>
   </div>
   );
-  }
-  export default App;
+}
+
+export default App;
