@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import fs from 'fs';
+import path from 'path';
 import './Tamagotchi.css'; // Importar el archivo CSS para la animación
 import pouAlegre from './pou-alegre.png'; // Importar la imagen del Tamagotchi alegre
 import pouTriste from './pou-triste.png'; // Importar la imagen del Tamagotchi triste
 import pouEnfermo from './pou-enfermo.png'; // Importar la imagen del Tamagotchi enfermo
 import pouHambriento from './pou-hambriento.png'; // Importar la imagen del Tamagotchi hambriento
-
 
 export function Tamagotchi() {
     // Definimos los estados iniciales de hambre, felicidad, salud, dinero y higiene
@@ -13,6 +14,7 @@ export function Tamagotchi() {
     const [health, setHealth] = useState(100);
     const [money, setMoney] = useState(0);
     const [hygiene, setHygiene] = useState(100); // Estado para la higiene
+    const [energy, setEnergy] = useState(100); // Estado para la energía
     const [showModal, setShowModal] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false); // Estado para controlar si el juego está en marcha
 
@@ -37,12 +39,14 @@ export function Tamagotchi() {
         setHappiness((prev) => Math.min(prev + 20, 100)); // Incrementa felicidad hasta un máximo de 100
         setHunger((prev) => Math.max(prev - 5, 0)); // Reduce hambre hasta un mínimo de 0
         setHealth((prev) => Math.max(prev - 5, 0)); // Reduce salud hasta un mínimo de 0
+        setEnergy((prev) => Math.max(prev - 10, 0)); // Reduce energía hasta un mínimo de 0
     };
 
     // Función para hacer dormir al Tamagotchi
     const sleep = () => {
         setHealth((prev) => Math.min(prev + 10, 100)); // Incrementa salud hasta un máximo de 100
         setHappiness((prev) => Math.max(prev - 5, 0)); // Reduce felicidad hasta un mínimo de 0
+        setEnergy((prev) => Math.min(prev + 20, 100)); // Incrementa energía hasta un máximo de 100
     };
 
     // Función para trabajar con el Tamagotchi
@@ -50,7 +54,15 @@ export function Tamagotchi() {
         setHappiness((prev) => Math.max(prev - 10, 0)); // Reduce felicidad hasta un mínimo de 0
         setHealth((prev) => Math.max(prev - 10, 0)); // Reduce salud hasta un mínimo de 0
         setHunger((prev) => Math.max(prev - 10, 0)); // Reduce hambre hasta un mínimo de 0
+        setEnergy((prev) => Math.max(prev - 20, 0)); // Reduce energía hasta un mínimo de 0
+        setHygiene((prev) => Math.max(prev - 10, 0)); // Reduce higiene hasta un mínimo de 0
         setMoney((prev) => prev + 20); // Incrementa dinero en 25
+    };
+
+    // Función para limpiar al Tamagotchi
+    const clean = () => {
+        setHygiene((prev) => Math.min(prev + 20, 100)); // Incrementa higiene hasta un máximo de 100
+        setHappiness((prev) => Math.min(prev + 5, 100)); // Incrementa felicidad hasta un máximo de 100
     };
 
     // Función para iniciar/pausar el juego
@@ -75,6 +87,7 @@ export function Tamagotchi() {
             setHappiness((prev) => Math.max(prev - 1, 0));
             setHealth((prev) => Math.max(prev - 1, 0));
             setHygiene((prev) => Math.max(prev - 1, 0)); // Reducir higiene cada 3 segundos
+            setEnergy((prev) => Math.max(prev - 1, 0)); // Reducir energía cada 3 segundos
         }, 3000); // Intervalo de 3 segundos
 
         // Cleanup: Limpia el temporizador cuando el componente se desmonta o se pausa el juego
@@ -92,13 +105,28 @@ export function Tamagotchi() {
 
     // Función para mostrar el mensaje de estado del Tamagotchi
     const getStatusMessage = () => {
+        if (hunger < 20 && happiness < 20 && health < 20 && hygiene < 20 && energy < 20) return "¡Tengo hambre, estoy triste, no me siento bien, estoy sucio y cansado! 😟😢😷🛁😴";
+        if (hunger < 20 && happiness < 20 && health < 20 && hygiene < 20) return "¡Tengo hambre, estoy triste, no me siento bien y estoy sucio! 😟😢😷🛁";
+        if (hunger < 20 && happiness < 20 && health < 20 && energy < 20) return "¡Tengo hambre, estoy triste, no me siento bien y estoy cansado! 😟😢😷😴";
+        if (hunger < 20 && happiness < 20 && hygiene < 20 && energy < 20) return "¡Tengo hambre, estoy triste, estoy sucio y cansado! 😟😢🛁😴";
+        if (hunger < 20 && health < 20 && hygiene < 20 && energy < 20) return "¡Tengo hambre, no me siento bien, estoy sucio y cansado! 😟😷🛁😴";
+        if (happiness < 20 && health < 20 && hygiene < 20 && energy < 20) return "¡Estoy triste, no me siento bien, estoy sucio y cansado! 😢😷🛁😴";
         if (hunger < 20 && happiness < 20 && health < 20) return "¡Tengo hambre, estoy triste y no me siento bien! 😟😢😷";
         if (hunger < 20 && happiness < 20) return "¡Tengo hambre y estoy triste! 😟😢";
         if (hunger < 20 && health < 20) return "¡Tengo hambre y no me siento bien! 😟😷";
         if (happiness < 20 && health < 20) return "¡Estoy triste y no me siento bien! 😢😷";
+        if (hunger < 20 && hygiene < 20) return "¡Tengo hambre y estoy sucio! 😟🛁";
+        if (hunger < 20 && energy < 20) return "¡Tengo hambre y estoy cansado! 😟😴";
+        if (happiness < 20 && hygiene < 20) return "¡Estoy triste y estoy sucio! 😢🛁";
+        if (happiness < 20 && energy < 20) return "¡Estoy triste y estoy cansado! 😢😴";
+        if (health < 20 && hygiene < 20) return "¡No me siento bien y estoy sucio! 😷🛁";
+        if (health < 20 && energy < 20) return "¡No me siento bien y estoy cansado! 😷😴";
+        if (hygiene < 20 && energy < 20) return "¡Estoy sucio y estoy cansado! 🛁😴";
         if (hunger < 20) return "¡Tengo hambre! 😟";
         if (happiness < 20) return "Estoy triste 😢";
         if (health < 20) return "No me siento bien 😷";
+        if (hygiene < 20) return "Estoy sucio 🛁";
+        if (energy < 20) return "Estoy cansado 😴";
         return "¡Estoy feliz! 😊";
     };
 
@@ -149,6 +177,24 @@ export function Tamagotchi() {
                 </div>
             </div>
 
+            {/* Barra de Progreso para Higiene */}
+            <div className="mb-4">
+                <label className="block font-medium mb-1">Higiene:</label>
+                <div className="bg-gray-300 h-4 rounded overflow-hidden">
+                    {/* Ancho dinámico basado en el valor de hygiene */}
+                    <div className={`${getProgressClass(hygiene)} h-full`} style={{ width: `${hygiene}%` }} />
+                </div>
+            </div>
+
+            {/* Barra de Progreso para Energía */}
+            <div className="mb-4">
+                <label className="block font-medium mb-1">Energía:</label>
+                <div className="bg-gray-300 h-4 rounded overflow-hidden">
+                    {/* Ancho dinámico basado en el valor de energy */}
+                    <div className={`${getProgressClass(energy)} h-full`} style={{ width: `${energy}%` }} />
+                </div>
+            </div>
+
             {/* Mostrar el dinero actual */}
             <p className="text-center text-lg font-semibold mb-4">Dinero: ${money}</p>
 
@@ -185,6 +231,14 @@ export function Tamagotchi() {
                     disabled={!isPlaying}
                 >
                     💼Trabajar💼
+                </button>
+                {/* Botón para limpiar al Tamagotchi */}
+                <button
+                    onClick={clean}
+                    className={`px-4 py-2 ${isPlaying ? 'bg-teal-500 hover:bg-teal-600' : 'bg-gray-500'} text-white rounded transition`}
+                    disabled={!isPlaying}
+                >
+                    🛁Limpiar🧼
                 </button>
             </div>
             {/* Botón para iniciar/pausar el juego */}
